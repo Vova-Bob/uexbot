@@ -1,70 +1,78 @@
 """
 Main entry point for the Discord UEX bot.
 
-This script initializes the Discord client, loads environment variables for
-configuration, sets up the UEX API client, loads all command cogs and starts
-the bot. Slash commands are synchronised automatically on startup.
+Loads env vars, initializes Discord client, sets up UEX API client and i18n,
+loads cogs, and syncs slash-commands.
 """
 
 from __future__ import annotations
-
-import asyncio
 import os
-from typing import List
-
+import asyncio
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
-from uex_api import UEXAPI
+# new imports after restructuring
+from utils.uex_api import get_api_from_env
+from utils.i18n import I18N, LangPrefs
+
+
+INTENTS = discord.Intents.none()  # keep minimal; extend if you add features
+CMD_PREFIX = "!"                  # not used by slash-commands; kept for future
 
 
 class UEXBot(commands.Bot):
-    """Custom Bot class that holds a reference to the UEX API client."""
+    """Bot that holds API client and i18n services."""
 
-    def __init__(self, api: UEXAPI, *args: any, **kwargs: any) -> None:
-        super().__init__(*args, **kwargs)
-        self.api = api
+    def __init__(self) -> None:
+        super().__init__(command_prefix=CMD_PREFIX, intents=INTENTS)
+        # API (token is optional for /categories; taken from .env if present)
+        self.api = get_api_from_env()
+        # i18n services with default locale from env (uk/en)
+        default_locale = os.getenv("DEFAULT_LOCALE", "uk")
+        self.i18n = I18N(default=default_locale)
+        self.lang_prefs = LangPrefs(default=default_locale)
 
     async def setup_hook(self) -> None:
-        """Hook called before the bot logs in; load cogs here."""
-        # Load all extensions (cogs) in the cogs package
-        initial_extensions: List[str] = [
-            "cogs.general",
-        ]
-        for ext in initial_extensions:
-            await self.load_extension(ext)
+        """Load cogs and sync application commands."""
+        # Load only the 'category' cog (each command = separate file)
+        await self.load_extension("cogs.category")
 
-        # Sync command tree globally
-        # If you want faster updates, specify a guild ID here and sync to that guild only
-        await self.tree.sync()
+        # Faster dev sync to a specific guild if provided
+        guild_id = os.getenv("DISCORD_GUILD_ID")
+        if guild_id:
+            await self.tree.sync(guild=discord.Object(id=int(guild_id)))
+            print(f"[sync] commands -> guild {guild_id}")
+        else:
+            await self.tree.sync()
+            print("[sync] commands -> global")
+
+    async def close(self) -> None:
+        """Ensure API session is closed on shutdown."""
+        try:
+            await self.api.close()
+        finally:
+            await super().close()
 
 
 async def main() -> None:
-    """Entrypoint for running the bot."""
-    # Load environment variables from .env file if present
+    """Entrypoint to start the bot."""
     load_dotenv()
-    discord_token = os.getenv("DISCORD_TOKEN")
-    uex_token = os.getenv("UEX_API_TOKEN")
-    if not discord_token:
-        raise RuntimeError("DISCORD_TOKEN environment variable not set")
-    if not uex_token:
-        raise RuntimeError("UEX_API_TOKEN environment variable not set")
-    api = UEXAPI(uex_token)
 
-    intents = discord.Intents.default()
-    # Enable members intent if needed for your commands
-    bot = UEXBot(api=api, command_prefix="!", intents=intents)
+    token = os.getenv("DISCORD_TOKEN")
+    if not token:
+        raise RuntimeError("DISCORD_TOKEN is not set in environment")
+
+    bot = UEXBot()
 
     @bot.event
     async def on_ready() -> None:
-        """Event called when the bot is ready."""
+        """Called when bot becomes ready."""
+        assert bot.user is not None
         print(f"Logged in as {bot.user} (ID: {bot.user.id})")
 
-    try:
-        await bot.start(discord_token)
-    finally:
-        await api.close()
+    async with bot:
+        await bot.start(token)
 
 
 if __name__ == "__main__":

@@ -68,7 +68,6 @@ class ItemsPaginatorView(discord.ui.View):
         self.add_item(self.prev_btn)
         self.add_item(self.next_btn)
 
-        # Ініціалізувати стани
         self._update_buttons()
 
     # ----- helpers -----
@@ -89,11 +88,7 @@ class ItemsPaginatorView(discord.ui.View):
         desc = format_items_list(self._page_slice())
         embed = discord.Embed(title=title, description=desc, color=0x2b6cb0)
         page_num = (self.offset // self.page_size) + 1
-        embed.set_footer(
-            text=self.i18n.t(
-                "ui.page_n", lang=self.lang, n=page_num
-            )
-        )
+        embed.set_footer(text=self.i18n.t("ui.page_n", lang=self.lang, n=page_num))
         return embed
 
     async def _guard(self, interaction: discord.Interaction) -> bool:
@@ -115,7 +110,9 @@ class ItemsPaginatorView(discord.ui.View):
     async def on_next(self, interaction: discord.Interaction) -> None:
         if not await self._guard(interaction):
             return
-        self.offset = min(self.total - (self.total % self.page_size or self.page_size), self.offset + self.page_size)
+        # Перехід на наступну сторінку, але не далі за останній валідний старт
+        last_start = max(0, self.total - self.page_size)
+        self.offset = min(self.offset + self.page_size, last_start)
         self._update_buttons()
         await interaction.response.edit_message(embed=self._embed(), view=self)
 
@@ -186,7 +183,7 @@ class ItemsByCategory(commands.Cog):
                 + [c for c in cats if cur in _norm(c.get("name", ""))]
             )[:20]
         )
-        lang = self.prefs.get(interaction.guild_id if interaction.guild else None)
+        lang = self.prefs.get(interaction.guild_id)  # ← фікс
         return [
             app_commands.Choice(
                 name=f'{self.i18n.tc(c.get("name", ""), lang)} (ID: {c.get("id")})',
@@ -201,7 +198,7 @@ class ItemsByCategory(commands.Cog):
     @app_commands.describe(category="ID або назва категорії (автодоповнення за назвою)")
     @app_commands.autocomplete(category=category_autocomplete)
     async def items_by_category(self, interaction: discord.Interaction, category: str) -> None:
-        lang = self.prefs.get(interaction.guild_id if interaction.guild else None)
+        lang = self.prefs.get(interaction.guild_id)  # ← фікс
         try:
             cat = await self._find_category(category)
         except Exception as exc:
@@ -221,10 +218,7 @@ class ItemsByCategory(commands.Cog):
 
         # ==== ОДИН РАЗ ТЯГНЕМО ВСЕ, ДАЛІ — ЛОКАЛЬНА ПАГІНАЦІЯ ====
         try:
-            # великий ліміт; якщо бек має межу — поверне максимум доступного.
-            data = await self.api.get(
-                "items", id_category=int(cat["id"]), limit=5000
-            )
+            data = await self.api.get("items", id_category=int(cat["id"]), limit=5000)
             items_all = data.get("data", []) or []
         except Exception as exc:
             await self._send_embed(

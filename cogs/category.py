@@ -21,10 +21,12 @@ from utils.i18n import I18N, LangPrefs
 
 
 def _is_int(text: str) -> bool:
+    """Return True if `text` is an integer."""
     return bool(re.fullmatch(r"\d+", (text or "").strip()))
 
 
 def _norm(text: str) -> str:
+    """Lowercase + trim for comparisons."""
     return (text or "").strip().lower()
 
 
@@ -91,11 +93,11 @@ class Category(commands.Cog):
             [c for c in cats if _norm(c.get("name", "")).startswith(cur)]
             + [c for c in cats if cur in _norm(c.get("name", ""))]
         )[:20]
-        lang = self.prefs.get(interaction.guild_id if interaction.guild else None)
+        lang = self.prefs.get(interaction.guild_id)  # use guild_id directly
         return [
             app_commands.Choice(
                 name=f'{self.i18n.tc(c.get("name", ""), lang)} (ID: {c.get("id")})',
-                value=str(c.get("id")),
+                value=str(c.get("id"))
             )
             for c in subset
         ]
@@ -110,7 +112,7 @@ class Category(commands.Cog):
     @app_commands.autocomplete(category=category_autocomplete)
     async def category(self, interaction: discord.Interaction, category: str) -> None:
         """Show details about a chosen category."""
-        lang = self.prefs.get(interaction.guild_id if interaction.guild else None)
+        lang = self.prefs.get(interaction.guild_id)  # use guild_id directly
         try:
             cat = await self._find_category(category)
         except Exception as exc:

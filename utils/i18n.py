@@ -7,6 +7,7 @@ Lightweight i18n loader with JSON dictionaries and per-guild prefs.
 - Category name translation: tc("Power Plants", lang)
 - Guild prefs persisted in <project_root>/data/lang_prefs.json
 """
+
 from __future__ import annotations
 
 import json
@@ -30,11 +31,11 @@ class I18N:
         self.default = default
         self._lock = threading.Lock()
         self._dicts: Dict[str, Dict[str, Any]] = {}
-        # Preload known locales; add more codes if you ship more files
+        # Preload known locales; extend if you add more files
         for lang in ("en", "uk"):
             self._dicts[lang] = self._load(lang)
 
-    # -------- internal io --------
+    # ---------- internal io ----------
     def _load(self, lang: str) -> Dict[str, Any]:
         """Load one locale JSON; return empty dict on failure."""
         path = os.path.join(_LOCALES_DIR, f"{lang}.json")
@@ -44,7 +45,7 @@ class I18N:
         except Exception:
             return {}
 
-    # -------- public api --------
+    # ---------- public api ----------
     def reload(self) -> Dict[str, Dict[str, Any]]:
         """Reload all *.json under locales/ atomically."""
         with self._lock:
@@ -109,7 +110,7 @@ class LangPrefs:
 
     def __init__(self, default: str = "uk") -> None:
         self.default = default
-        os.makedirs(_PREFS_DIR, exist_ok=True)
+        os.makedirs(_PREFS_DIR, exist_ok=True)  # ensure folder exists on startup
         try:
             with open(_PREFS_PATH, "r", encoding="utf-8") as f:
                 self._data = json.load(f)
@@ -124,8 +125,18 @@ class LangPrefs:
 
     def set(self, guild_id: int, lang: str) -> None:
         """Persist guild language to JSON atomically."""
+        # Be robust even if __init__ wasn't able to create the folder earlier
+        os.makedirs(_PREFS_DIR, exist_ok=True)
+
         self._data[str(guild_id)] = lang
+
+        # Atomic write: write into tmp, fsync, then replace
         tmp = _PREFS_PATH + ".tmp"
         with open(tmp, "w", encoding="utf-8") as f:
             json.dump(self._data, f, ensure_ascii=False, indent=2)
+            f.flush()
+            try:
+                os.fsync(f.fileno())  # may be unavailable on some FS; safe to ignore
+            except Exception:
+                pass
         os.replace(tmp, _PREFS_PATH)

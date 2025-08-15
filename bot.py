@@ -1,8 +1,9 @@
+# bot.py
 """
 Main entry point for the Discord UEX bot.
 
 Loads env vars, initializes Discord client, sets up UEX API client and i18n,
-loads cogs (each command = separate file), and syncs slash-commands.
+loads cogs, and syncs slash-commands (per-guild if DISCORD_GUILD_IDS is set).
 """
 
 from __future__ import annotations
@@ -16,37 +17,36 @@ from utils.uex_api import get_api_from_env
 from utils.i18n import I18N, LangPrefs
 
 INTENTS = discord.Intents.none()
-CMD_PREFIX = "!"  # not used by slash-commands
+CMD_PREFIX = "!"
 
 class UEXBot(commands.Bot):
-    """Bot that holds API client and i18n services."""
-
     def __init__(self) -> None:
         super().__init__(command_prefix=CMD_PREFIX, intents=INTENTS)
-        # API (token optional for /categories)
         self.api = get_api_from_env()
-        # i18n
         default_locale = os.getenv("DEFAULT_LOCALE", "uk")
         self.i18n = I18N(default=default_locale)
         self.lang_prefs = LangPrefs(default=default_locale)
 
     async def setup_hook(self) -> None:
-        """Load cogs and sync application commands."""
-        # One command per file (SRP)
+        # load cogs
         await self.load_extension("cogs.category")
         await self.load_extension("cogs.items_by_category")
         await self.load_extension("cogs.lang")
+        await self.load_extension("cogs.sync")  # new: admin sync commands
 
-        guild_id = os.getenv("DISCORD_GUILD_ID")
-        if guild_id:
-            await self.tree.sync(guild=discord.Object(id=int(guild_id)))
-            print(f"[sync] commands -> guild {guild_id}")
+        # fast per-guild sync if env provided (comma-separated list)
+        gids = os.getenv("DISCORD_GUILD_IDS", "").strip()
+        if gids:
+            ids = [int(x) for x in gids.replace(" ", "").split(",") if x]
+            for gid in ids:
+                await self.tree.sync(guild=discord.Object(id=gid))
+            print(f"[sync] commands -> guilds {ids}")
         else:
+            # fallback to global sync (may take up to ~1h to propagate)
             await self.tree.sync()
             print("[sync] commands -> global")
 
     async def close(self) -> None:
-        """Ensure API session is closed on shutdown."""
         try:
             await self.api.close()
         finally:
@@ -57,6 +57,7 @@ async def main() -> None:
     token = os.getenv("DISCORD_TOKEN")
     if not token:
         raise RuntimeError("DISCORD_TOKEN is not set in environment")
+
     bot = UEXBot()
 
     @bot.event

@@ -1,27 +1,43 @@
-# Python cache
+# --- Python cache ---
 __pycache__/
+**/__pycache__/
 *.py[cod]
 *.pyo
 
-# Virtual environments
+# --- Virtual environments ---
 *_venv/
 .venv/
 venv/
 ENV/
 env/
+c129773c1a9106b0e7917bf2048cd74d_venv/
 
-# Logs
+# --- Logs ---
 logs/
 *.log
 
-# OS-specific
+# --- OS-specific ---
 .DS_Store
 Thumbs.db
 
-# IDE settings
+# --- IDE settings ---
 .vscode/
 .idea/
 .env
 
-# runtime
-/data/*.json
+# --- Runtime/state (never commit) ---
+# data: ігноруємо все, крім "якоря" .gitkeep
+/data/*
+!/data/.gitkeep
+
+# logs: ігноруємо все, крім "якоря" .gitkeep
+/logs/*
+!/logs/.gitkeep
+
+# temp & caches
+/tmp/
+.cache/
+
+# SQLite / local DBs
+*.sqlite
+*.sqlite3

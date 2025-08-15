@@ -34,6 +34,7 @@ class I18N:
         for lang in ("en", "uk"):
             self._dicts[lang] = self._load(lang)
 
+    # -------- internal io --------
     def _load(self, lang: str) -> Dict[str, Any]:
         """Load one locale JSON; return empty dict on failure."""
         path = os.path.join(_LOCALES_DIR, f"{lang}.json")
@@ -42,6 +43,24 @@ class I18N:
                 return json.load(f)
         except Exception:
             return {}
+
+    # -------- public api --------
+    def reload(self) -> Dict[str, Dict[str, Any]]:
+        """Reload all *.json under locales/ atomically."""
+        with self._lock:
+            new_maps: Dict[str, Dict[str, Any]] = {}
+            try:
+                for fn in os.listdir(_LOCALES_DIR):
+                    if not fn.endswith(".json"):
+                        continue
+                    code = os.path.splitext(fn)[0]
+                    new_maps[code] = self._load(code)
+                # swap dictionaries
+                self._dicts = new_maps
+            except Exception:
+                # keep current maps on error
+                pass
+            return self._dicts
 
     def available_languages(self) -> Dict[str, bool]:
         """Return a map of available language codes -> True/False."""

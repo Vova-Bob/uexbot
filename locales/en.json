@@ -14,7 +14,13 @@
     "cmd_ping_desc": "Check bot latency",
     "cmd_lang_desc": "Set bot language for this server",
     "cmd_lang_param": "Language code (en, uk)",
-    "ok_lang_set": "Language set to: **{lang}**"
+    "ok_lang_set": "Language set to: **{code}**",
+    "lang_current": "Current language: **{code}**",
+    "nav_prev": "Previous",
+    "nav_next": "Next",
+    "nav_close": "Close",
+    "nav_not_author": "This panel is only available to the requester.",
+    "page_n": "Page {n}"
   },
   "labels": {
     "id": "ID",

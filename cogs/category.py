@@ -1,12 +1,12 @@
 """
-Category command (standalone cog) for the UEX API with i18n (uk/en).
-- Autocomplete by category name (value passes category ID as string)
-- Uses /categories list endpoint and filters locally (no /categories/{id})
+/category command (standalone cog) with i18n and private embeds.
+- Autocomplete by category name
+- Uses /categories list endpoint and filters locally
+- Memory cache 60s (no disk cache, no env flags)
 """
 
 from __future__ import annotations
 
-import os
 import asyncio
 import re
 from typing import List, Optional, Tuple
@@ -21,12 +21,10 @@ from utils.i18n import I18N, LangPrefs
 
 
 def _is_int(text: str) -> bool:
-    """Return True if text is integer-like."""
     return bool(re.fullmatch(r"\d+", (text or "").strip()))
 
 
 def _norm(text: str) -> str:
-    """Lowercase + trim for comparisons."""
     return (text or "").strip().lower()
 
 
@@ -38,22 +36,17 @@ class Category(commands.Cog):
         self.api = api
         self.i18n = i18n
         self.prefs = prefs
-
-        # Default privacy from env (DEFAULT_EPHEMERAL=1/true/on)
-        ephem_env = os.getenv("DEFAULT_EPHEMERAL", "1").lower()
-        default_ephemeral = ephem_env in ("1", "true", "yes", "y", "on")
-
-        self._send_embed = send_embed_factory(i18n, default_ephemeral=default_ephemeral)
-        self._categories_cache: Tuple[float, List[dict]] = (0.0, [])  # (timestamp, data)
+        # always send private embeds by default
+        self._send_embed = send_embed_factory(i18n, default_ephemeral=True)
+        # simple RAM cache (timestamp, data)
+        self._categories_cache: Tuple[float, List[dict]] = (0.0, [])
 
     @commands.Cog.listener()
     async def on_ready(self) -> None:
-        """Log that cog is loaded."""
         print(f"Loaded cog: {self.__class__.__name__}")
 
-    # ---------------- internal helpers ----------------
     async def _load_categories(self) -> List[dict]:
-        """Load categories with a tiny 60s cache (be gentle to the API)."""
+        """Fetch categories; keep 60s cache in memory."""
         now = asyncio.get_event_loop().time()
         ts, cached = self._categories_cache
         if cached and (now - ts) < 60:
@@ -63,7 +56,7 @@ class Category(commands.Cog):
         return cats
 
     async def _find_category(self, query: str) -> Optional[dict]:
-        """Find category by numeric ID or by name (exact, startswith, contains)."""
+        """Find by numeric ID or by name (exact/startswith/contains)."""
         cats = await self._load_categories()
         if not cats:
             return None
@@ -83,13 +76,12 @@ class Category(commands.Cog):
         contains = [c for c in cats if q in _norm(c.get("name", ""))]
         return contains[0] if contains else None
 
-    # ---------------- autocomplete ----------------
     async def category_autocomplete(
         self,
         interaction: discord.Interaction,
         current: str,
     ) -> List[app_commands.Choice[str]]:
-        """Autocomplete by category name; value passed is category ID as string."""
+        """Autocomplete by category name; pass category ID as value."""
         try:
             cats = await self._load_categories()
         except Exception:
@@ -108,7 +100,6 @@ class Category(commands.Cog):
             for c in subset
         ]
 
-    # ---------------- slash command ----------------
     @app_commands.command(
         name="category",
         description="Показати інформацію про категорію (ID або назва; є автодоповнення)",
@@ -118,7 +109,7 @@ class Category(commands.Cog):
     )
     @app_commands.autocomplete(category=category_autocomplete)
     async def category(self, interaction: discord.Interaction, category: str) -> None:
-        """Show details about a chosen category (list endpoint + local filter)."""
+        """Show details about a chosen category."""
         lang = self.prefs.get(interaction.guild_id if interaction.guild else None)
         try:
             cat = await self._find_category(category)
@@ -148,6 +139,5 @@ class Category(commands.Cog):
 
 
 async def setup(bot: commands.Bot) -> None:
-    """Register this cog with the bot."""
     api = bot.api  # provided by UEXBot
     await bot.add_cog(Category(bot, api, bot.i18n, bot.lang_prefs))

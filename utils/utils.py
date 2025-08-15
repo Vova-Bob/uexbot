@@ -16,23 +16,24 @@ def send_embed_factory(i18n: I18N, default_ephemeral: bool = True):
 
     Usage:
         send = send_embed_factory(i18n, default_ephemeral=True)
-        await send(interaction, "Title", "Desc")                 # private
-        await send(interaction, "Public", "Desc", ephemeral=False)  # public
+        await send(interaction, "Title", "Desc")                      # private
+        await send(interaction, "Public", "Desc", ephemeral=False)    # public
+        await send(interaction, "T", "D", view=my_view)               # with buttons
     """
     async def send_embed(
         interaction: discord.Interaction,
         title: str,
         description: str,
         ephemeral: Optional[bool] = None,
+        view: Optional[discord.ui.View] = None,
     ) -> None:
         ephem = default_ephemeral if ephemeral is None else ephemeral
         embed = discord.Embed(title=title, description=description, color=0x2b6cb0)
 
-        # If initial response already sent, use followup
         if interaction.response.is_done():
-            await interaction.followup.send(embed=embed, ephemeral=ephem)
+            await interaction.followup.send(embed=embed, view=view, ephemeral=ephem)
         else:
-            await interaction.response.send_message(embed=embed, ephemeral=ephem)
+            await interaction.response.send_message(embed=embed, view=view, ephemeral=ephem)
 
     return send_embed
 
@@ -46,11 +47,9 @@ def format_category(category: Dict[str, Any], i18n: I18N, lang: str) -> str:
     cid = category.get("id", "-")
     name = i18n.tc(category.get("name", "-"), lang)
 
-    # raw values from API
     raw_type = str(category.get("type", "-"))
     raw_section = str(category.get("section", "-"))
 
-    # translate type/section; fallback to raw if key missing
     ctype = i18n.t(f"type_map.{raw_type}", lang=lang)
     if ctype == f"type_map.{raw_type}":
         ctype = raw_type
@@ -75,7 +74,7 @@ def format_category(category: Dict[str, Any], i18n: I18N, lang: str) -> str:
 def format_items_list(items: List[Dict[str, Any]]) -> str:
     """Format a list of items for display."""
     lines: List[str] = []
-    for it in items[:50]:  # limit to keep embeds compact
+    for it in items[:50]:  # keep embeds compact
         iid = it.get("id", "-")
         name = it.get("name", "Unnamed")
         code = it.get("code") or ""

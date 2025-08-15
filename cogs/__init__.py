@@ -1,0 +1,1 @@
+"""Cogs package for the Discord UEX bot."""

@@ -36,17 +36,20 @@ class Fuel(commands.Cog):
         print(f"Loaded cog: {self.__class__.__name__}")
 
     async def _load_fuel(self) -> List[dict]:
-        cache_name = "fuel_prices"
+        cache_name = "fuel_prices_all"
         cached = load_json_cache(cache_name, 600)
         if cached:
             return cached
-        data = await self.api.get_fuel_prices()
+        data = await self.api.get_fuel_prices_all()
+        # official API returns status: ok / missing_required_input
+        if (data or {}).get("status") != "ok":
+            return []
         entries = data.get("data", []) or []
         save_json_cache(cache_name, entries)
         return entries
 
     @app_commands.command(name="fuel", description="Ціни на паливо")
-    @app_commands.describe(query="Система/станція (опціонально)")
+    @app_commands.describe(query="Система/станція або назва палива (опціонально)")
     async def fuel(self, interaction: discord.Interaction, query: str = "") -> None:
         lang = self.prefs.get(interaction.guild_id)
         try:
@@ -60,7 +63,12 @@ class Fuel(commands.Cog):
             return
         q = _norm(query)
         if q:
-            entries = [e for e in entries if q in _norm(e.get("location", ""))]
+            entries = [
+                e
+                for e in entries
+                if q in _norm(e.get("terminal_name", ""))
+                or q in _norm(e.get("commodity_name", ""))
+            ]
         if not entries:
             await self._send_embed(
                 interaction,

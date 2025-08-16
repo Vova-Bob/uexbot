@@ -68,9 +68,16 @@ def format_fuel_list(entries: List[Dict[str, Any]], i18n: I18N, lang: str) -> st
     """Format fuel price list."""
     lines: List[str] = []
     for e in entries[:25]:
-        loc = _shorten(e.get("location") or e.get("terminal") or "-")
-        price = _fmt_money(e.get("price"))
-        lines.append(f"• {loc}: {price}")
+        t = _shorten(e.get("terminal_name", "-"))
+        c = e.get("commodity_name", "-")
+        pb = e.get("price_buy", 0)
+        pba = e.get("price_buy_avg")
+        avg_part = (
+            f" | {i18n.t('labels.avg', lang=lang)}: {pba:.2f}"
+            if pba is not None
+            else ""
+        )
+        lines.append(f"• {t} — {c}: `{pb:.2f}` aUEC{avg_part}")
     return "\n".join(lines) or "—"
 
 

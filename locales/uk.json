@@ -56,7 +56,8 @@
     "scu": "SCU",
     "commodity": "Товар",
     "game_version": "Версія гри",
-    "updated": "Оновлено"
+    "updated": "Оновлено",
+    "avg": "Середн."
   },
   "categories": {
     "Arms": "Броня: Руки",

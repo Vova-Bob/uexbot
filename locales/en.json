@@ -56,7 +56,8 @@
     "scu": "SCU",
     "commodity": "Commodity",
     "game_version": "Game version",
-    "updated": "Updated"
+    "updated": "Updated",
+    "avg": "Avg"
   },
   "categories": {
     "Arms": "Arms",

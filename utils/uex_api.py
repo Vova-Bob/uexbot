@@ -148,6 +148,10 @@ class UEXAPI:
         """Fetch commodities alerts."""
         return await self.get("commodities_alerts", **params)
 
+    async def get_fuel_prices_all(self) -> Dict[str, Any]:
+        """Fetch all fuel prices without filters."""
+        return await self.get("fuel_prices_all")
+
 
 # Helper to create UEXAPI client from environment
 def get_api_from_env() -> UEXAPI:

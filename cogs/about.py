@@ -15,6 +15,7 @@ from utils.i18n import I18N, LangPrefs
 from utils import cache as cache_utils
 
 BOT_VERSION = "0.1"
+START_TIME = dt.datetime.utcnow()
 
 
 class About(commands.Cog):
@@ -32,21 +33,23 @@ class About(commands.Cog):
     async def on_ready(self) -> None:
         print(f"Loaded cog: {self.__class__.__name__}")
 
-    async def _load_versions(self) -> dict:
+    async def _load_versions(self) -> list[dict]:
         cache_name = "game_versions"
         cached = cache_utils.load_json_cache(cache_name, 86400)
         if cached:
-            return {"data": cached}
-        data = await self.api.get("game_versions")
-        cache_utils.save_json_cache(cache_name, data.get("data", []))
-        return data
+            return cached
+        data = await self.api.get_game_versions()
+        if (data or {}).get("status") != "ok":
+            return []
+        entries = data.get("data", []) or []
+        cache_utils.save_json_cache(cache_name, entries)
+        return entries
 
     @app_commands.command(name="about", description="Про бота і версію гри")
     async def about(self, interaction: discord.Interaction) -> None:
         lang = self.prefs.get(interaction.guild_id)
         try:
-            data = await self._load_versions()
-            versions = data.get("data", [])
+            versions = await self._load_versions()
         except Exception as exc:
             await self._send_embed(
                 interaction,
@@ -57,9 +60,11 @@ class About(commands.Cog):
         cache_file = cache_utils._path("game_versions")
         ts = dt.datetime.fromtimestamp(os.path.getmtime(cache_file)) if os.path.exists(cache_file) else dt.datetime.utcnow()
         ver = versions[0].get("version") if versions else "?"
+        uptime = dt.datetime.utcnow() - START_TIME
         desc = (
             f"{self.i18n.t('labels.game_version', lang=lang)}: {ver}\n"
             f"{self.i18n.t('labels.updated', lang=lang)}: {ts.isoformat()}\n"
+            f"{self.i18n.t('labels.uptime', lang=lang)}: {str(uptime).split('.', 1)[0]}\n"
             f"Bot: {BOT_VERSION}"
         )
         title = self.i18n.t("ui.cmd_about_desc", lang=lang)

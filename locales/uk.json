@@ -57,7 +57,8 @@
     "commodity": "Товар",
     "game_version": "Версія гри",
     "updated": "Оновлено",
-    "avg": "Середн."
+    "avg": "Середн.",
+    "mcs": "MCS"
   },
   "categories": {
     "Arms": "Броня: Руки",

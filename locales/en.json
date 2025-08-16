@@ -57,7 +57,8 @@
     "commodity": "Commodity",
     "game_version": "Game version",
     "updated": "Updated",
-    "avg": "Avg"
+    "avg": "Avg",
+    "mcs": "MCS"
   },
   "categories": {
     "Arms": "Arms",

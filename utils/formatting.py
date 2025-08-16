@@ -70,14 +70,21 @@ def format_fuel_list(entries: List[Dict[str, Any]], i18n: I18N, lang: str) -> st
     for e in entries[:25]:
         t = _shorten(e.get("terminal_name", "-"))
         c = e.get("commodity_name", "-")
-        pb = e.get("price_buy", 0)
+        pb = e.get("price_buy")
         pba = e.get("price_buy_avg")
+        mcs = e.get("terminal_mcs")
+        pb_s = f"{pb:.2f}" if pb is not None else "-"
         avg_part = (
             f" | {i18n.t('labels.avg', lang=lang)}: {pba:.2f}"
             if pba is not None
             else ""
         )
-        lines.append(f"• {t} — {c}: `{pb:.2f}` aUEC{avg_part}")
+        mcs_part = (
+            f" | {i18n.t('labels.mcs', lang=lang)}: {mcs}"
+            if mcs is not None
+            else ""
+        )
+        lines.append(f"• {t} — {c}: `{pb_s}` aUEC{avg_part}{mcs_part}")
     return "\n".join(lines) or "—"
 
 

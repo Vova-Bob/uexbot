@@ -144,6 +144,10 @@ class UEXAPI:
         """Fetch cities list."""
         return await self.get("cities", **params)
 
+    async def get_vehicles(self, **params: Any) -> Dict[str, Any]:
+        """Fetch vehicles list (used to resolve ship SCU)."""
+        return await self.get("vehicles", **params)
+
     async def get_commodities_alerts(self, **params: Any) -> Dict[str, Any]:
         """Fetch commodities alerts."""
         return await self.get("commodities_alerts", **params)

@@ -36,7 +36,11 @@
     "err_route_fetch": "Failed to fetch route: {msg}",
     "err_fuel_fetch": "Failed to fetch fuel: {msg}",
     "err_history_fetch": "Failed to fetch price history: {msg}",
-    "err_no_matches": "No matches found"
+    "err_no_matches": "No matches found",
+    "no_buy_locations": "No buy locations available.",
+    "no_sell_locations": "No sell locations available.",
+    "route_no_scu": "Specify a ship or SCU to calculate profit.",
+    "no_profitable_route": "No profitable route or buy/sell locations match."
   },
   "labels": {
     "id": "ID",
@@ -59,7 +63,13 @@
     "updated": "Updated",
     "uptime": "Uptime",
     "avg": "Avg",
-    "mcs": "MCS"
+    "mcs": "MCS",
+    "buy_locations": "Buy locations",
+    "sell_locations": "Sell locations",
+    "best_route": "Best route",
+    "ship": "Ship",
+    "total_cost": "Total purchase cost",
+    "total_profit": "Total profit"
   },
   "categories": {
     "Arms": "Arms",

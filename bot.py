@@ -36,6 +36,7 @@ class UEXBot(commands.Bot):
             "cogs.price",
             "cogs.price_history",
             "cogs.route",
+            "cogs.trade",
             "cogs.alerts",
             "cogs.fuel",
             "cogs.about",

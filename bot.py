@@ -29,10 +29,23 @@ class UEXBot(commands.Bot):
 
     async def setup_hook(self) -> None:
         # load cogs
-        await self.load_extension("cogs.category")
-        await self.load_extension("cogs.items_by_category")
-        await self.load_extension("cogs.lang")
-        await self.load_extension("cogs.sync")  # new: admin sync commands
+        initial_extensions = [
+            "cogs.category",
+            "cogs.items_by_category",
+            "cogs.lang",
+            "cogs.price",
+            "cogs.price_history",
+            "cogs.route",
+            "cogs.alerts",
+            "cogs.fuel",
+            "cogs.about",
+            "cogs.sync",
+        ]
+        for ext in initial_extensions:
+            try:
+                await self.load_extension(ext)
+            except Exception as exc:
+                print(f"[warn] failed to load extension {ext}: {exc}")
 
         # fast per-guild sync if env provided (comma-separated list)
         gids = os.getenv("DISCORD_GUILD_IDS", "").strip()

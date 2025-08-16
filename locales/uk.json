@@ -20,7 +20,23 @@
     "nav_next": "Наступна",
     "nav_close": "Закрии",
     "nav_not_author": "Ця панель доступна лише автору запиту.",
-    "page_n": "Сторінка {n}"
+    "page_n": "Сторінка {n}",
+    "cmd_price_desc": "Показати ціни товару (термінал опціонально)",
+    "cmd_price_param_commodity": "Назва товару",
+    "cmd_price_param_terminal": "Термінал (опціонально)",
+    "cmd_price_history_desc": "Історія цін товару",
+    "cmd_route_desc": "Маршрут трейду та прибуток",
+    "cmd_route_param_from": "Звідки (термінал)",
+    "cmd_route_param_to": "Куди (термінал, опціонально)",
+    "cmd_route_param_scu": "Скільки SCU",
+    "cmd_alerts_desc": "Алерти по цінах/наявності",
+    "cmd_fuel_desc": "Ціни на паливо",
+    "cmd_about_desc": "Про бота і версію гри",
+    "err_price_fetch": "Не вдалося отримати ціни: {msg}",
+    "err_route_fetch": "Не вдалося отримати маршрут: {msg}",
+    "err_fuel_fetch": "Не вдалося отримати паливо: {msg}",
+    "err_history_fetch": "Не вдалося отримати історію цін: {msg}",
+    "err_no_matches": "Нічого не знайдено"
   },
   "labels": {
     "id": "ID",
@@ -30,7 +46,17 @@
     "in_game": "В грі",
     "mining_related": "Для майнінгу",
     "yes": "так",
-    "no": "ні"
+    "no": "ні",
+    "buy": "Купівля",
+    "sell": "Продаж",
+    "profit_per_unit": "Прибуток/од.",
+    "profit_total": "Загальний прибуток",
+    "terminal": "Термінал",
+    "location": "Локація",
+    "scu": "SCU",
+    "commodity": "Товар",
+    "game_version": "Версія гри",
+    "updated": "Оновлено"
   },
   "categories": {
     "Arms": "Броня: Руки",

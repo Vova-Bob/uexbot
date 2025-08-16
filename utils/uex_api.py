@@ -115,6 +115,39 @@ class UEXAPI:
         data = await self.get("items", **params)
         return data.get("data", []) or []
 
+    # ------------------- v1 endpoints -------------------
+    async def get_commodities_prices(self, **params: Any) -> Dict[str, Any]:
+        """Fetch commodity prices (sell/buy)."""
+        return await self.get("commodities_prices", **params)
+
+    async def get_commodities_prices_history(self, **params: Any) -> Dict[str, Any]:
+        """Fetch historical prices for a commodity."""
+        return await self.get("commodities_prices_history", **params)
+
+    async def get_commodities_routes(self, **params: Any) -> Dict[str, Any]:
+        """Fetch trading routes between terminals."""
+        return await self.get("commodities_routes", **params)
+
+    async def get_terminals(self, **params: Any) -> Dict[str, Any]:
+        """Fetch terminals list."""
+        return await self.get("terminals", **params)
+
+    async def get_fuel_prices(self, **params: Any) -> Dict[str, Any]:
+        """Fetch fuel prices."""
+        return await self.get("fuel_prices", **params)
+
+    async def get_space_stations(self, **params: Any) -> Dict[str, Any]:
+        """Fetch space stations list."""
+        return await self.get("space_stations", **params)
+
+    async def get_cities(self, **params: Any) -> Dict[str, Any]:
+        """Fetch cities list."""
+        return await self.get("cities", **params)
+
+    async def get_commodities_alerts(self, **params: Any) -> Dict[str, Any]:
+        """Fetch commodities alerts."""
+        return await self.get("commodities_alerts", **params)
+
 
 # Helper to create UEXAPI client from environment
 def get_api_from_env() -> UEXAPI:

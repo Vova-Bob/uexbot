@@ -1,4 +1,4 @@
-"""/price command: show commodity prices with local pagination."""
+""" /price command: show commodity prices with local pagination (optimized). """
 
 from __future__ import annotations
 
@@ -105,9 +105,8 @@ class Price(commands.Cog):
                 + [c for c in commodities if cur in _norm(c.get("name", ""))]
             )[:20]
         )
-        lang = self.prefs.get(interaction.guild_id)
         return [
-            app_commands.Choice(name=self.i18n.tc(c.get("name", ""), lang), value=str(c.get("id")))
+            app_commands.Choice(name=c.get("name", ""), value=str(c.get("id")))
             for c in subset
         ]
 
@@ -147,12 +146,21 @@ class Price(commands.Cog):
         contains = [c for c in commodities if q in _norm(c.get("name", ""))]
         return contains[0] if contains else None
 
-    async def _load_prices(self, commodity_id: int) -> List[dict]:
-        cache_name = f"prices_{commodity_id}"
+    async def _load_prices(self, *, commodity_id: int, terminal_id: Optional[int]) -> List[dict]:
+        cache_name = f"prices_{commodity_id}" + (f"_t{terminal_id}" if terminal_id else "")
         cached = load_json_cache(cache_name, 600)
         if cached:
             return cached
-        data = await self.api.get_commodities_prices(id_commodity=commodity_id, limit=5000)
+
+        params = {"id_commodity": commodity_id}
+        if terminal_id:
+            params["id_terminal"] = terminal_id
+
+        data = await self.api.get_commodities_prices(**params)
+        status = (data or {}).get("status", "ok")
+        if status != "ok":
+            return []
+
         entries = data.get("data", []) or []
         save_json_cache(cache_name, entries)
         return entries
@@ -164,7 +172,7 @@ class Price(commands.Cog):
     )
     @app_commands.autocomplete(commodity=commodity_autocomplete, terminal=terminal_autocomplete)
     async def price(self, interaction: discord.Interaction, commodity: str, terminal: Optional[str] = None) -> None:
-        lang = self.prefs.get(interaction.guild_id)
+        lang = self.prefs.get(interaction.guild_id if interaction.guild else None)
         try:
             comm = await self._find_commodity(commodity)
         except Exception as exc:
@@ -181,8 +189,9 @@ class Price(commands.Cog):
                 self.i18n.t("ui.err_no_matches", lang=lang),
             )
             return
+        tid = int(terminal) if terminal else None
         try:
-            entries = await self._load_prices(int(comm.get("id")))
+            entries = await self._load_prices(commodity_id=int(comm.get("id")), terminal_id=tid)
         except Exception as exc:
             await self._send_embed(
                 interaction,
@@ -190,9 +199,6 @@ class Price(commands.Cog):
                 self.i18n.t("ui.err_price_fetch", lang=lang, msg=str(exc)),
             )
             return
-        if terminal:
-            tid = int(terminal)
-            entries = [e for e in entries if e.get("id_terminal") == tid]
         if not entries:
             await self._send_embed(
                 interaction,
